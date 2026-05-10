@@ -34,6 +34,8 @@ https://github.com/RCMgames/RCM-Hardware-Nibble
 // from https://github.com/RCMgames/useful-code/tree/main/boards
 */
 
+#include "ICM20948_helper.h"
+
 JEncoderAS5048bI2C encoder1 = JEncoderAS5048bI2C(false, 1.0, 0x48, 0, 0, true);
 JEncoderAS5048bI2C encoder2 = JEncoderAS5048bI2C(false, 1.0, 0x50, 0, 0, true);
 
@@ -72,6 +74,7 @@ void Enabled()
     * encoder1Pos, encoder2Pos (wheel positions)
     * encoder1Vel, encoder2Vel (wheel velocities)
     *
+    * imu (type imu. and see what variables are in the autocomplete)
     *
     outputs:
     * motor1Val, motor2Val, motor3Val, motor4Val (floats between -1 and 1 that control the motors)
@@ -112,6 +115,7 @@ void Disable()
 void PowerOn()
 {
     // runs once on robot startup, set pin modes and use begin() if applicable here
+    nibbleSetupImu();
     encoder1.useCustomWire(Wire1);
     encoder2.useCustomWire(Wire1);
     Wire1.begin();
@@ -121,6 +125,7 @@ void Always()
 {
     // always runs if void loop is running, JMotor run() functions should be put here
     // (but only the "top level", for example if you call drivetrainController.run() you don't also need to call leftMotorController.run())
+    nibbleRunImu();
     encoder1.run();
     encoder2.run();
 
