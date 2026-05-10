@@ -36,14 +36,14 @@ https://github.com/RCMgames/RCM-Hardware-Nibble
 
 #include "ICM20948_helper.h"
 
-JEncoderAS5048bI2C encoder1 = JEncoderAS5048bI2C(false, 1.0, 0x48, 0, 0, true);
-JEncoderAS5048bI2C encoder2 = JEncoderAS5048bI2C(false, 1.0, 0x50, 0, 0, true);
+JEncoderQuadratureAttachInterrupt encoder1 = JEncoderQuadratureAttachInterrupt(port1Pin, port2Pin, 1.0/2550.0, false);
+JEncoderQuadratureAttachInterrupt encoder2 = JEncoderQuadratureAttachInterrupt(port3Pin, port4Pin, 1.0/2550.0,true);
 
 // TODO: do floats cause problems if the wheels have turned many times?
-float encoder1Pos = 0;
-float encoder2Pos = 0;
-float encoder1Vel = 0;
-float encoder2Vel = 0;
+float local_left_pos = 0;
+float local_right_pos = 0;
+float local_left_vel = 0;
+float local_right_vel = 0;
 
 // all the motor drivers
 JMotorDriverTMC7300 motor1Driver = JMotorDriverTMC7300(portA);
@@ -51,19 +51,17 @@ JMotorDriverTMC7300 motor2Driver = JMotorDriverTMC7300(portB);
 JMotorDriverTMC7300 motor3Driver = JMotorDriverTMC7300(portC);
 JMotorDriverTMC7300 motor4Driver = JMotorDriverTMC7300(portD);
 
-float motor1Val = 0;
-float motor2Val = 0;
-float motor3Val = 0;
-float motor4Val = 0;
+float local_left_motor_power = 0;
+float local_right_motor_power = 0;
 
 int32_t controller_micros = 0;
 float controller_batteryVoltage = 0;
 boolean controller_button = false;
 
-float controller_1_pos = 0;
-float controller_2_pos = 0;
-float controller_1_vel = 0;
-float controller_2_vel = 0;
+float remote_left_pos = 0;
+float remote_right_pos = 0;
+float remote_left_vel = 0;
+float remote_right_vel = 0;
 
 void Enabled()
 {
@@ -71,27 +69,32 @@ void Enabled()
     /*
     inputs:
     * enabled (true if car is connected)
-    * encoder1Pos, encoder2Pos (wheel positions)
-    * encoder1Vel, encoder2Vel (wheel velocities)
+    * local_left_pos, local_right_pos (wheel positions)
+    * local_left_vel, local_right_vel (wheel velocities)
     *
     * imu (type imu. and see what variables are in the autocomplete)
     *
     outputs:
-    * motor1Val, motor2Val, motor3Val, motor4Val (floats between -1 and 1 that control the motors)
+    * local_left_motor_power, local_right_motor_power, motor3Val, motor4Val (floats between -1 and 1 that control the motors)
     *
     *
     */
 
-    motor1Val = (controller_1_pos - encoder1Pos) * 1.0;
-    motor2Val = (controller_2_pos - encoder2Pos) * 1.0;
+    // position to position
+    // local_left_motor_power = (remote_left_pos - local_left_pos) * 1.0;
+    // local_right_motor_power = (remote_right_pos - local_right_pos) * 1.0;
+
+    // position to velocity
+    local_left_motor_power = remote_left_pos;
+    local_right_motor_power = remote_right_pos;
 
     RSLcolor = (controller_button ? CRGB(255, 255, 255) : CRGB(250, 45, 0));
 
     // set motors
-    motor1Driver.set(motor1Val);
-    motor2Driver.set(motor2Val);
-    motor3Driver.set(motor3Val);
-    motor4Driver.set(motor4Val);
+    motor1Driver.set(-local_left_motor_power);
+    motor2Driver.set(-local_right_motor_power);
+    motor3Driver.set(local_left_motor_power);
+    motor4Driver.set(local_right_motor_power);
 }
 
 void Enable()
@@ -112,13 +115,15 @@ void Disable()
     motor4Driver.disable();
 }
 
+jENCODER_MAKE_ISRS_MACRO(encoder1)
+jENCODER_MAKE_ISRS_MACRO(encoder2)
+
 void PowerOn()
 {
     // runs once on robot startup, set pin modes and use begin() if applicable here
     nibbleSetupImu();
-    encoder1.useCustomWire(Wire1);
-    encoder2.useCustomWire(Wire1);
-    Wire1.begin();
+    encoder1.setUpInterrupts(encoder1_jENCODER_ISR_A, encoder1_jENCODER_ISR_B);
+    encoder2.setUpInterrupts(encoder2_jENCODER_ISR_A, encoder2_jENCODER_ISR_B);
 }
 
 void Always()
@@ -129,18 +134,22 @@ void Always()
     encoder1.run();
     encoder2.run();
 
-    encoder1Pos = encoder1.getPos();
-    encoder2Pos = encoder2.getPos();
-    encoder1Vel = encoder1.getVel();
-    encoder2Vel = encoder2.getVel();
+    local_left_pos = encoder1.getPos();
+    local_right_pos = encoder2.getPos();
+    local_left_vel = encoder1.getVel();
+    local_right_vel = encoder2.getVel();
 
-    Serial.print(encoder1Pos);
+    Serial.print(local_left_pos);
     Serial.print(", ");
-    Serial.print(encoder1Vel);
+    Serial.print(local_left_vel);
     Serial.print(", ");
-    Serial.print(encoder2Pos);
+    Serial.print(local_right_pos);
     Serial.print(", ");
-    Serial.println(encoder2Vel);
+    Serial.print(local_right_vel);
+    Serial.print(", ");
+    Serial.print(remote_left_pos);
+    Serial.print(", ");
+    Serial.println(remote_right_pos);
 
     // delay(1);
 }
@@ -153,10 +162,10 @@ void WifiDataToParse()
     controller_batteryVoltage = EWD::recvFl();
     controller_micros = EWD::recvIn();
     controller_button = EWD::recvBl();
-    controller_1_pos = EWD::recvFl();
-    controller_2_pos = EWD::recvFl();
-    controller_1_vel = EWD::recvFl();
-    controller_2_vel = EWD::recvFl();
+    remote_left_pos = EWD::recvFl();
+    remote_right_pos = EWD::recvFl();
+    remote_left_vel = EWD::recvFl();
+    remote_right_vel = EWD::recvFl();
 }
 void WifiDataToSend()
 {
@@ -165,10 +174,10 @@ void WifiDataToSend()
     // add data to send here: (EWD::sendBl(), EWD::sendBy(), EWD::sendIn(), EWD::sendFl())(boolean, byte, int, float)
     EWD::sendIn(micros());
     EWD::sendBl(digitalRead(0) == 0);
-    EWD::sendFl(encoder1Pos);
-    EWD::sendFl(encoder2Pos);
-    EWD::sendFl(encoder1Vel);
-    EWD::sendFl(encoder2Vel);
+    EWD::sendFl(local_left_pos);
+    EWD::sendFl(local_right_pos);
+    EWD::sendFl(local_left_vel);
+    EWD::sendFl(local_right_vel);
 }
 
 void configWifi()
