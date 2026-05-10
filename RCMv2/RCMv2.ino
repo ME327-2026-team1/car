@@ -125,7 +125,7 @@ void Always()
 {
     // always runs if void loop is running, JMotor run() functions should be put here
     // (but only the "top level", for example if you call drivetrainController.run() you don't also need to call leftMotorController.run())
-    nibbleRunImu();
+    runIMU();
     encoder1.run();
     encoder2.run();
 
