@@ -84,9 +84,13 @@ void Enabled()
     // local_left_motor_power = (remote_left_pos - local_left_pos) * 1.0;
     // local_right_motor_power = (remote_right_pos - local_right_pos) * 1.0;
 
-    // position to velocity
+    // (springy) position to velocity
     local_left_motor_power = remote_left_pos;
     local_right_motor_power = remote_right_pos;
+
+    // debugging controller
+    // local_left_motor_power = 0;
+    // local_right_motor_power = 0;
 
     RSLcolor = (controller_button ? CRGB(255, 255, 255) : CRGB(250, 45, 0));
 
