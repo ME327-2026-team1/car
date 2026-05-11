@@ -36,8 +36,8 @@ https://github.com/RCMgames/RCM-Hardware-Nibble
 
 #include "ICM20948_helper.h"
 
-JEncoderQuadratureAttachInterrupt encoder1 = JEncoderQuadratureAttachInterrupt(port1Pin, port2Pin, 1.0/2550.0, false);
-JEncoderQuadratureAttachInterrupt encoder2 = JEncoderQuadratureAttachInterrupt(port3Pin, port4Pin, 1.0/2550.0,true);
+JEncoderQuadratureAttachInterrupt encoder1 = JEncoderQuadratureAttachInterrupt(port1Pin, port2Pin, 1.0 / 2550.0, false);
+JEncoderQuadratureAttachInterrupt encoder2 = JEncoderQuadratureAttachInterrupt(port3Pin, port4Pin, 1.0 / 2550.0, true);
 
 // TODO: do floats cause problems if the wheels have turned many times?
 float local_left_pos = 0;
@@ -92,7 +92,7 @@ void Enabled()
     // local_left_motor_power = 0;
     // local_right_motor_power = 0;
 
-    RSLcolor = (controller_button ? CRGB(255, 255, 255) : CRGB(250, 45, 0));
+    RSLcolor = (controller_button ? CRGB(255, 255, 255) : (voltageComp.getSupplyVoltage() < 7.0 ? CRGB(150, 0, 5) : CRGB(250, 45, 0)));
 
     // set motors
     motor1Driver.set(-local_left_motor_power);
@@ -119,8 +119,8 @@ void Disable()
     motor4Driver.disable();
 }
 
-jENCODER_MAKE_ISRS_MACRO(encoder1)
-jENCODER_MAKE_ISRS_MACRO(encoder2)
+jENCODER_MAKE_ISRS_MACRO(encoder1);
+jENCODER_MAKE_ISRS_MACRO(encoder2);
 
 void PowerOn()
 {
