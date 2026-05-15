@@ -182,6 +182,7 @@ void WifiDataToSend()
     EWD::sendFl(local_right_pos);
     EWD::sendFl(local_left_vel);
     EWD::sendFl(local_right_vel);
+    EWD::sendFl(imu.accX);
 }
 
 void configWifi()

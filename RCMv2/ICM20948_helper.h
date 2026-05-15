@@ -76,9 +76,9 @@ boolean nibbleSetupImu()
 void runIMU()
 {
     IMU.getAGMT(); // The values are only updated when you call 'getAGMT'
-    imu.accX = IMU.accX();
-    imu.accY = IMU.accY();
-    imu.accZ = IMU.accZ();
+    imu.accX = IMU.accX() / 1000.0;
+    imu.accY = IMU.accY() / 1000.0;
+    imu.accZ = IMU.accZ() / 1000.0;
     imu.gyrX = IMU.gyrX();
     imu.gyrY = IMU.gyrY();
     imu.gyrZ = IMU.gyrZ();
