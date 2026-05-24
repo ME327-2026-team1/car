@@ -36,8 +36,10 @@ https://github.com/RCMgames/RCM-Hardware-Nibble
 
 #include "ICM20948_helper.h"
 
-JEncoderQuadratureAttachInterrupt encoder1 = JEncoderQuadratureAttachInterrupt(port1Pin, port2Pin, 1.0 / 2550.0, false);
-JEncoderQuadratureAttachInterrupt encoder2 = JEncoderQuadratureAttachInterrupt(port3Pin, port4Pin, 1.0 / 2550.0, true);
+// JEncoderQuadratureAttachInterrupt encoder1 = JEncoderQuadratureAttachInterrupt(port1Pin, port2Pin, 1.0 / 2550.0, false);
+// JEncoderQuadratureAttachInterrupt encoder2 = JEncoderQuadratureAttachInterrupt(port3Pin, port4Pin, 1.0 / 2550.0, true);
+JEncoderAS5048bI2C encoder1 = JEncoderAS5048bI2C(true, 1.0, 0x58, 10000, 100, true);
+JEncoderAS5048bI2C encoder2 = JEncoderAS5048bI2C(false, 1.0, 0x60, 10000, 100, true);
 
 // TODO: do floats cause problems if the wheels have turned many times?
 float local_left_pos = 0;
@@ -47,9 +49,7 @@ float local_right_vel = 0;
 
 // all the motor drivers
 JMotorDriverTMC7300 motor1Driver = JMotorDriverTMC7300(portA);
-JMotorDriverTMC7300 motor2Driver = JMotorDriverTMC7300(portB);
-JMotorDriverTMC7300 motor3Driver = JMotorDriverTMC7300(portC);
-JMotorDriverTMC7300 motor4Driver = JMotorDriverTMC7300(portD);
+JMotorDriverTMC7300 motor2Driver = JMotorDriverTMC7300(portD);
 
 float local_left_motor_power = 0;
 float local_right_motor_power = 0;
@@ -81,24 +81,14 @@ void Enabled()
     */
 
     // position to position
-    // local_left_motor_power = (remote_left_pos - local_left_pos) * 1.0;
-    // local_right_motor_power = (remote_right_pos - local_right_pos) * 1.0;
-
-    // (springy) position to velocity
-    local_left_motor_power = remote_left_pos;
-    local_right_motor_power = remote_right_pos;
-
-    // debugging controller
-    // local_left_motor_power = 0;
-    // local_right_motor_power = 0;
+    local_left_motor_power = (remote_left_pos - local_left_pos) * 0.5;
+    local_right_motor_power = (remote_right_pos - local_right_pos) * 0.5;
 
     RSLcolor = (controller_button ? CRGB(255, 255, 255) : (voltageComp.getSupplyVoltage() < 7.0 ? CRGB(150, 0, 5) : CRGB(250, 45, 0)));
 
     // set motors
-    motor1Driver.set(-local_left_motor_power);
+    motor1Driver.set(local_left_motor_power);
     motor2Driver.set(-local_right_motor_power);
-    motor3Driver.set(local_left_motor_power);
-    motor4Driver.set(local_right_motor_power);
 }
 
 void Enable()
@@ -106,8 +96,6 @@ void Enable()
     // turn on outputs
     motor1Driver.enable();
     motor2Driver.enable();
-    motor3Driver.enable();
-    motor4Driver.enable();
 }
 
 void Disable()
@@ -115,26 +103,23 @@ void Disable()
     // turn off outputs
     motor1Driver.disable();
     motor2Driver.disable();
-    motor3Driver.disable();
-    motor4Driver.disable();
 }
-
-jENCODER_MAKE_ISRS_MACRO(encoder1);
-jENCODER_MAKE_ISRS_MACRO(encoder2);
 
 void PowerOn()
 {
     // runs once on robot startup, set pin modes and use begin() if applicable here
-    nibbleSetupImu();
-    encoder1.setUpInterrupts(encoder1_jENCODER_ISR_A, encoder1_jENCODER_ISR_B);
-    encoder2.setUpInterrupts(encoder2_jENCODER_ISR_A, encoder2_jENCODER_ISR_B);
+    // nibbleSetupImu();
+    Wire1.setClock(1000000);
+    encoder1.useCustomWire(Wire1);
+    encoder2.useCustomWire(Wire1);
+    Wire1.begin();
 }
 
 void Always()
 {
     // always runs if void loop is running, JMotor run() functions should be put here
     // (but only the "top level", for example if you call drivetrainController.run() you don't also need to call leftMotorController.run())
-    runIMU();
+    // runIMU();
     encoder1.run();
     encoder2.run();
 
@@ -144,18 +129,21 @@ void Always()
     local_right_vel = encoder2.getVel();
 
     Serial.print(local_left_pos);
-    Serial.print(", ");
+    Serial.print(", \t");
     Serial.print(local_left_vel);
-    Serial.print(", ");
+    Serial.print(", \t");
     Serial.print(local_right_pos);
-    Serial.print(", ");
+    Serial.print(", \t");
     Serial.print(local_right_vel);
-    Serial.print(", ");
+    Serial.print(", \t");
     Serial.print(remote_left_pos);
-    Serial.print(", ");
-    Serial.println(remote_right_pos);
-
-    // delay(1);
+    Serial.print(", \t");
+    Serial.print(remote_right_pos);
+    Serial.print(", \t");
+    Serial.print(encoder1.getAutoGain());
+    Serial.print(", \t");
+    Serial.print(encoder2.getAutoGain());
+    Serial.println();
 }
 
 #if RCM_COMM_METHOD == RCM_COMM_EWD
@@ -187,13 +175,12 @@ void WifiDataToSend()
 
 void configWifi()
 {
-    EWD::mode = EWD::Mode::connectToNetwork;
-    EWD::routerName = "BEJM_controller";
-    EWD::routerPassword = "hapticsBEJM";
-    EWD::routerPort = 25210;
-    EWD::communicateWithIP = "192.168.4.1";
-    EWD::resendTimeout = 50;
-    EWD::signalLossTimeout = 150;
+    EWD::mode = EWD::Mode::createAP;
+    EWD::APName = "BEJM_controller";
+    EWD::APPassword = "hapticsBEJM";
+    EWD::APPort = 25210;
+    EWD::resendTimeout = 45;
+    EWD::signalLossTimeout = 120;
 }
 #endif
 
