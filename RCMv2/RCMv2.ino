@@ -45,6 +45,9 @@ float local_right_pos = 0;
 float local_left_vel = 0;
 float local_right_vel = 0;
 
+float k_bilateral = 1.0;
+float d_bilateral = 0.0;
+
 // all the motor drivers
 JMotorDriverTMC7300 motor1Driver = JMotorDriverTMC7300(portA);
 JMotorDriverTMC7300 motor2Driver = JMotorDriverTMC7300(portB);
@@ -80,17 +83,18 @@ void Enabled()
     *
     */
 
+
+
     // position to position
     // local_left_motor_power = (remote_left_pos - local_left_pos) * 1.0;
     // local_right_motor_power = (remote_right_pos - local_right_pos) * 1.0;
 
-    // (springy) position to velocity
+    // position to velocity
     local_left_motor_power = remote_left_pos;
     local_right_motor_power = remote_right_pos;
 
-    // debugging controller
-    // local_left_motor_power = 0;
-    // local_right_motor_power = 0;
+
+    
 
     RSLcolor = (controller_button ? CRGB(255, 255, 255) : (voltageComp.getSupplyVoltage() < 7.0 ? CRGB(150, 0, 5) : CRGB(250, 45, 0)));
 
