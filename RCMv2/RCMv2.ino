@@ -83,10 +83,14 @@ void Enabled()
     */
 
     // position to position
-    local_left_motor_power = (remote_left_pos * 2.0 - local_left_pos) * 0.03;
-    local_right_motor_power = (remote_right_pos * 2.0 - local_right_pos) * 0.03;
+    local_left_motor_power = (remote_left_pos * 2.0 - local_left_pos) * 0.045;
+    local_right_motor_power = (remote_right_pos * 2.0 - local_right_pos) * 0.045;
 
     RSLcolor = (controller_button ? CRGB(255, 255, 255) : (voltageComp.getSupplyVoltage() < 7.0 ? CRGB(150, 0, 5) : CRGB(250, 45, 0)));
+    if(controller_button){
+        encoder1.zeroCounter();
+        encoder2.zeroCounter();
+    }
 
     // set motors
     motor1Driver.set(local_left_motor_power);
@@ -98,8 +102,8 @@ void Enable()
     // turn on outputs
     motor1Driver.enable();
     motor2Driver.enable();
-    encoder1.zeroCounter();
-    encoder2.zeroCounter();
+    // encoder1.zeroCounter();
+    // encoder2.zeroCounter();
 }
 
 void Disable()
@@ -190,12 +194,13 @@ void WifiDataToSend()
 
 void configWifi()
 {
+
     EWD::mode = EWD::Mode::createAP;
     EWD::APName = "BEJM_controller";
     EWD::APPassword = "hapticsBEJM";
     EWD::APPort = 25210;
-    EWD::resendTimeout = 45;
-    EWD::signalLossTimeout = 120;
+    EWD::resendTimeout = 505;
+    EWD::signalLossTimeout = 720;
 }
 #endif
 
