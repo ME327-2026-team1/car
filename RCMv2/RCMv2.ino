@@ -191,13 +191,12 @@ void WifiDataToSend()
 
 void configWifi()
 {
-    EWD::mode = EWD::Mode::connectToNetwork;
-    EWD::routerName = "BEJM_controller";
-    EWD::routerPassword = "hapticsBEJM";
-    EWD::routerPort = 25210;
-    EWD::communicateWithIP = "192.168.4.1";
-    EWD::resendTimeout = 50;
-    EWD::signalLossTimeout = 150;
+    EWD::mode = EWD::Mode::createAP;
+    EWD::APName = "BEJM_controller";
+    EWD::APPassword = "hapticsBEJM";
+    EWD::APPort = 25210;
+    EWD::resendTimeout = 505;
+    EWD::signalLossTimeout = 720;
 }
 #endif
 
