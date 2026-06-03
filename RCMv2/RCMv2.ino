@@ -39,14 +39,10 @@ https://github.com/RCMgames/RCM-Hardware-Nibble
 JEncoderQuadratureAttachInterrupt encoder1 = JEncoderQuadratureAttachInterrupt(port1Pin, port2Pin, 1.0 / 2550.0, false);
 JEncoderQuadratureAttachInterrupt encoder2 = JEncoderQuadratureAttachInterrupt(port3Pin, port4Pin, 1.0 / 2550.0, true);
 
-// TODO: do floats cause problems if the wheels have turned many times?
 float local_left_pos = 0;
 float local_right_pos = 0;
 float local_left_vel = 0;
 float local_right_vel = 0;
-
-float k_bilateral = 1.0;
-float d_bilateral = 0.0;
 
 // all the motor drivers
 JMotorDriverTMC7300 motor1Driver = JMotorDriverTMC7300(portA);
@@ -83,18 +79,9 @@ void Enabled()
     *
     */
 
-
-
-    // position to position
-    // local_left_motor_power = (remote_left_pos - local_left_pos) * 1.0;
-    // local_right_motor_power = (remote_right_pos - local_right_pos) * 1.0;
-
     // position to velocity
     local_left_motor_power = remote_left_pos;
     local_right_motor_power = remote_right_pos;
-
-
-    
 
     RSLcolor = (controller_button ? CRGB(255, 255, 255) : (voltageComp.getSupplyVoltage() < 7.0 ? CRGB(150, 0, 5) : CRGB(250, 45, 0)));
 
